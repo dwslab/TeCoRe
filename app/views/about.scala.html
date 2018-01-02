@@ -1,0 +1,41 @@
+@(about: String)
+
+@tecore() = {
+    <div class="container pull-left" style="width: 500px">
+        <p>
+            The TeCoRe (Temporal Conflict Resolution) system allows to choose a uncertain temporal knowledge graph and
+            inference rules, build new temporal constraints (via an auto-completion), and compute conflicting temporal
+            facts.
+        </p>
+        <p>
+            TeCoRe is built on top of the temporal extensions of nRockIt and PSL solver. In a nutshell, TeCoRe
+            translates uncertain temporal knowledge graphs, inference rules and constraints into weighted first-order
+            logic that can be represented by MLNs (Markov Logic Networks) and PSL (Probabilistic Soft Logic). TeCoRe
+            can be applied in several contexts among which debugging uncertain temporal knowledge graphs and making
+            temporal inference scalable due to the magnitude of many existing knowledge graphs.
+        </p>
+        <p>
+            TeCoRe has been successfully tested in a highly noisy setting where there are as many erroneous temporal
+            facts as the correct ones.
+        </p>
+    </div>
+}
+
+@us() = {
+
+}
+
+@temporal() = {
+
+}
+
+@if("temporal".equals(about)) {
+    @temporal()
+} else {
+    @if("us".equals(about)) {
+        @us()
+    } else {
+        @tecore()
+    }
+}
+

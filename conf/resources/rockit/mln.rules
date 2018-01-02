@@ -1,0 +1,23 @@
+//Syntax: declare numerical constants as 'int' not 'Integer'
+pinst(s, p, o, int, int, valid)
+*pinstConf(s, p, o, int, int, valid, float_) 
+conf: !pinstConf(s, p, o, i1, i2, valid, conf) v pinst(s, p, o, i1, i2, valid) 
+
+*sameAs(x, x)
+
+// intervals must be consistent, otherwise record a conflict
+consistent(i1,i2) := [i1 <= i2]
+!pinst(s, p, o, i1, i2, valid) v consistent(i1,i2).
+
+
+before(i1,i2,i3,i4) := [i2 < i3]
+validLifeSpan(i1, i2) := [(i2 - i1) < 15000]
+aboveSixteen(birth, other) := [(other - birth) > 1600]
+belowFifty(birth, other) := [(other - birth) < 5000]
+meets(i1,i2,i3,i4) := [i2 == i3]
+overlaps(i1,i2,i3,i4) := [(i2 > i3) && (i2 < i4) && (i1 < i3)]
+starts(i1,i2,i3,i4) := [i1 == i3]
+during(i1,i2,i3,i4) := [(i1 > i3) && (i2 < i4)]
+finishes(i1,i2,i3,i4) := [i2 == i4]
+equal(i1,i2,i3,i4) := [(i1 == i3) && (i2 == i4)]
+disjoint(i1,i2,i3,i4) := [(i2 < i3) || (i4 < i1)]

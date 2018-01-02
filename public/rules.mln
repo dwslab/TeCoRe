@@ -1,0 +1,35 @@
+//Syntax: declare numerical constants as 'int' not 'Integer'
+pinst(s, p, o, int, int)
+*pinstConf(s, p, o, int, int, float_) 
+conf: !pinstConf(s, p, o, i1, i2, conf) v pinst(s, p, o, i1, i2) 
+
+*sameAs(x, x)
+
+// intervals must be consistent, otherwise record a conflict
+consistent(i1,i2) := [i1 <= i2]
+!pinst(s, p, o, i1, i2) v consistent(i1,i2).
+
+
+before(i1,i2,i3,i4) := [i2 < i3]
+equal(i1,i2,i3,i4) := [(i1 == i3) && (i2 == i4)]
+disjoint(i1,i2,i3,i4) := [(i2 < i3) || (i4 < i1)]
+
+validLifeSpan(i1, i2) := [(i2 - i1) < 15000]
+aboveSixteen(birth, other) := [(other - birth) > 1600]
+belowFifty(birth, other) := [(other - birth) < 5000]
+
+
+// Birthyear is functional
+!pinst(x, "hasBirthdate", y, i1, i2) v !pinst(x, "hasBirthdate", z, i3, i4) v sameAs(y, z).
+
+// Birthday has to be before year
+!pinst(x, "playsFor", y, i1, i2) v !pinst(x, "hasBirthdate", z, i3, i4) v before(i1, i2, i3, i4).
+
+// 6. A person must be atleast 16 before playing for a premier league club.
+4.0   !pinst(x, "hasBirthdate", y, i1, i2) v !pinst(x, "playsFor", z, i3, i4) v aboveSixteen(i1, i3)
+
+// 7. Someone who is older than 50 years does not play in a club.
+4.0   !pinst(x, "hasBirthdate", y, i1, i2) v !pinst(x, "playsFor", z, i3, i4) v belowFifty(i1, i4)
+
+// 8. A footballer cannot play for two different clubs at the same time/period.
+!pinst(x, "playsFor", y, i1, i2) v !pinst(x, "playsFor", z, i3, i4) v sameAs(y, z) v disjoint(i1,i2,i3,i4).

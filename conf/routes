@@ -1,0 +1,30 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+GET         /                                         controllers.HomeController.aboutTeCoRe
+GET         /about/tecore                             controllers.HomeController.aboutTeCoRe
+GET         /about/temporal                           controllers.HomeController.aboutTemporalConflictResolution
+GET         /about/us                                 controllers.HomeController.aboutUs
+
+GET         /editor/typeahead                         controllers.EditorController.getPredicates
+
+GET         /resolution/mln                           controllers.MlnController.index
+GET         /resolution/psl                           controllers.PslController.index
+
+POST        /resolution/mln/editor                    controllers.MlnController.editor
+POST        /resolution/psl/editor                    controllers.PslController.editor
+
+POST        /resolution/mln/result                    controllers.MlnController.result
+POST        /resolution/mln/result/consistent         controllers.MlnController.resultConsistent
+POST        /resolution/mln/result/conflicting        controllers.MlnController.resultConflicting
+GET         /resolution/mln/result/data               controllers.MlnController.getDataFile
+GET         /resolution/mln/result/rules              controllers.MlnController.getRulesFile
+GET         /resolution/mln/result/constraints        controllers.MlnController.getConstraintsFile
+
+POST        /resolution/psl/result/consistent         controllers.PslController.result
+POST        /resolution/psl/result/conflicting        controllers.PslController.result
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET         /assets/*file                             controllers.Assets.versioned(path="/public", file: Asset)

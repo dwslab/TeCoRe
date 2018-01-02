@@ -1,0 +1,39 @@
+
+	def evidencePartition = data.getPartition("evidence")
+	def insert = data.getInserter(tf, evidencePartition);
+
+	InserterUtils.loadDelimitedDataTruth(insert, this.args[0], ",");
+
+	def targetPartition = data.getPartition("target");
+	Database db = data.getDatabase(targetPartition, evidencePartition);
+
+    LazyMPEInference results = new LazyMPEInference(m, db, config);
+    results.mpeInference();
+
+	DecimalFormat formatter = new DecimalFormat("#.##");
+
+    // write conflicting triples
+	ArrayList<String> mpeState = new ArrayList<String>();
+	Set<GroundAtom> atoms = new HashSet<>();
+    atoms.addAll(Queries.getAllAtoms(db, tf));
+//    atoms.addAll(Queries.getAllAtoms(db, valid))
+//    atoms.addAll(Queries.getAllAtoms(db, invalid))
+    atoms.addAll(Queries.getAllAtoms(db, conflict))
+    atoms.addAll(Queries.getAllAtoms(db, wrongInterval))
+
+	for (GroundAtom atom : atoms){
+        mpeState.add(atom.toString() + "\t" + formatter.format(atom.getValue()) + "\t" + formatter.format(atom.getConfidenceValue()));
+	}
+	try {
+		Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.args[1]), "utf-8"));
+		for (String predicate : mpeState)
+			writer.write(predicate + "\n");
+		writer.close();
+	} catch (IOException e) {
+			System.err.println("Cannot write to file!")
+	}
+
+}
+
+withoutErrorTag();
+

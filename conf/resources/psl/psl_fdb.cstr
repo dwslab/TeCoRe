@@ -1,0 +1,2 @@
+m.add rule :  ( tf(X, 'hasBirthdate', Y, Begin1, End1)  &  tf(X, 'playsFor', Z, Begin2, End2)  &
+		~lessThan(Begin1, Begin2) ) >> conflict("before", X, "hasBirthdate", Y, Begin1, End1, X, "playsFor", Z, Begin2, End2), weight : 400.0

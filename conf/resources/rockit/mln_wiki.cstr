@@ -1,0 +1,33 @@
+// A person cannot have two birth dates
+!pinst(x, "P569", y, i1, i2, valid) v !pinst(x, "P569", z, i3, i4, valid) v sameAs(y, z).
+
+// A person cannot have two death dates
+!pinst(x, "P570", y, i1, i2, valid) v !pinst(x, "P570", z, i3, i4, valid) v sameAs(y, z).
+
+// A person's birth date is before his/her death date
+!pinst(x, "P569", y, i1, i2, valid) v !pinst(x, "P570", z, i3, i4, valid) v before(i1,i2,i3,i4).
+
+// A person must be born before playing for a team.
+!pinst(x, "P569", y, i1, i2, valid) v !pinst(x, "P54", z, i3, i4, valid) v before(i1, i2, i3, i4).
+
+// A person must be alive to play for a team.
+!pinst(x, "P570", y, i1, i2, valid) v !pinst(x, "P54", z, i3, i4, valid) v before(i3, i4, i1, i2).
+
+// A footballer cannot play for two different clubs at the same time/period.
+!pinst(x, "P54", y, i1, i2, valid) v !pinst(x, "P54", z, i3, i4, valid) v sameAs(y, z) v disjoint(i1,i2,i3,i4).
+
+// A person cannot be married to two distinct individuals.
+!pinst(x, "P26", y, i1, i2, valid) v !pinst(x, "P26", z, i3, i4, valid) v sameAs(y, z) v disjoint(i1,i2,i3,i4).
+!pinst(y, "P26", x, i1, i2, valid) v !pinst(z, "P26", x, i3, i4, valid) v sameAs(y, z) v disjoint(i1,i2,i3,i4).
+
+// A person must be born before getting married.
+!pinst(x, "P569", y, i1, i2, valid) v !pinst(x, "P26", z, i3, i4, valid) v before(i1, i2, i3, i4).
+
+// A person must be alive to be married.
+!pinst(x, "570", y, i1, i2, valid) v !pinst(x, "P26", z, i3, i4, valid) v before(i3, i4, i1, i2).
+
+// A person cannot be both a player and a coach at the same time.
+4.0		!pinst(x, "P54", y, i1, i2, valid) v !pinst(x, "P286", z, i3, i4, valid) v disjoint(i1,i2,i3,i4)
+
+// A person cannot work for two companies at the same time.
+4.0		!pinst(x, "P108", y, i1, i2, valid) v !pinst(x, "P108", z, i3, i4, valid) v sameAs(y, z) v disjoint(i1,i2,i3,i4)

@@ -1,0 +1,62 @@
+//	m.add rule :  ( tf(X, '"P54"', Y, Begin1, End1)   &
+//		lessThan(End1, Begin1) ) >> wrongInterval(X, "wrongInterval", Y), weight : 400.0
+	// #1. A person cannot have two birth dates
+//	m.add rule :  ( tf(X, '"P569"', Y, Begin1, End1)  &  tf(X, '"P569"', Z, Begin2, End2)  &
+//		notEqual(Begin1, Begin2) ) >> conflict(X, "P569", Y), weight : 400.0
+	// #2. A person cannot have two death dates
+//	m.add rule :  ( tf(X, '"P570"', Y, Begin1, End1)  &  tf(X, '"P570"', Z, Begin2, End2)  &
+//		notEqual(Begin1, Begin2) ) >> conflict(X, '"P570"', Y), weight : 400.0
+	// #3. A person's birth date is before his/her death date
+	m.add rule :  ( tf(X, '"P569"', Y, Begin1, End1)  &  tf(X, '"P570"', Z, Begin2, End2)  &
+		~lessThan(Begin1, Begin2) ) >> conflict(X, "diedBFborn", Y), weight : 400.0
+//	m.add rule :  ( tf(X, '"P569"', Y, Begin1, End1)  &  tf(X, '"P570"', Z, Begin2, End2)  &
+//		~validLifeSpan(Begin1, Begin2) ) >> conflict(X, "validSpan", Y), weight : 400.0
+	// #4. A person must be born before playing for a team.
+	m.add rule :  ( tf(X, '"P569"', Y, Begin1, End1)  &  tf(X, '"P54"', Z, Begin2, End2)  &
+		~before(Begin1, End1, Begin2, End2) ) >> conflict(X, "playsForBeforeBorn", Z), weight : 400.0
+	// #5. A person must be alive to play for a team.
+	m.add rule :  ( tf(X, '"P570"', Y, Begin1, End1)  &  tf(X, '"P54"', Z, Begin2, End2)  &
+		~before(Begin2, End2, Begin1, End1) ) >> conflict(X, "playsForAfterDeath", Z), weight : 400.0
+	// #6. A person must be atleast 16 before playing for a premier league club.  [SOFT CONSTRAINT]
+//	m.add rule :  ( tf(X, '"P569"', Y, Begin1, End1)  &  tf(X, '"P54"', Z, Begin2, End2)  &
+//		~aboveSixteen(Begin1, Begin2) ) >> conflict(X, "aboveSixteen", Z), weight : 4.0                   //conflict(X, "aboveSixteen", Z), weight : 4.0
+	// #7. Someone who is older than 50 years does not play in a club.  [SOFT]
+//	m.add rule :  ( tf(X, '"P569"', Y, Begin1, End1)  &  tf(X, '"P54"', Z, Begin2, End2)  &
+//		~belowFifty(Begin1, Begin2) ) >> conflict(X, "aboveFifty", Z), weight : 4.0
+	// #8. A footballer cannot play for two different clubs at the same time/period.  [correponds to Allen's DISJOINT]
+	m.add rule : ( tf(X, '"P54"', Y, Begin1, End1)  &  tf(X, '"P54"', Z, Begin2, End2) &
+		~strCMP(Y, Z) & ~disjoint(Begin1, End1, Begin2, End2) & checkInterval(Begin1, End1, Begin2, End2)  ) >> conflictExtended(X, Y, Begin1, End1, Z, Begin2, End2), weight : 400.0
+
+	// #9. A retired player is someone, that played for a club and is older 50 years
+//	m.add rule : ( tf(X, '"P569"', Y, Begin1, End1)  & tf(X, '"P54"', Z, Begin2, End2) &
+//		 aboveFifty(Begin1) ) >> triple(X, "is", "RetiredPlayer"), weight : 4.0
+	// #10. A young player in a team is someone who is at most 21 years old.
+//	m.add rule : ( tf(X, '"P569"', Y, Begin1, End1)  & tf(X, '"P54"', Z, Begin2, End2) &
+//		belowTwentyOne(Begin1) ) >> triple(X, "is", "YoungPlayer"), weight : 4.0
+	// #11. A teen player is someone who is at least 15 and at most 19 years old.
+//	m.add rule : ( tf(X, '"P569"', Y, Begin1, End1)  & tf(X, '"P54"', Z, Begin2, End2) &
+//		bnFiftteenNineteen(Begin1) ) >> triple(X, "is", "TeenPlayer"), weight : 4.0
+	// #12. DivorcedPerson ? [Refine this constraint]
+	//Long thisYear = new Long(2016);
+	//m.add rule : ( tf(X, "P26", Y, Begin1, End1)  &  ~tf(X, "P26", Z, Begin1, thisYear) & ~strCMP(Y, Z) ) >> triple(X, "is", "DivorcedPerson"), weight : 4.0
+	// #13. The inverse of spouse relation holds
+	m.add rule : ( tf(X, '"P26"', Y, Begin1, End1) ) >> triple(X, '"P26"', Y), weight : 4.0
+
+	// #14. A person cannot be married to two distinct individuals.
+	m.add rule : ( tf(X, '"P26"', Y, Begin1, End1)  &  tf(X, '"P26"', Z, Begin2, End2) &
+		~strCMP(Y, Z) & ~disjoint(Begin1, End1, Begin2, End2) & checkInterval(Begin1, End1, Begin2, End2) ) >> conflict(X, "oneSpouseMan", Z), weight : 400.0
+	// #15. Constraint #13 with exchanged arguments.
+	m.add rule : ( tf(Y, '"P26"', X, Begin1, End1)  &  tf(Z, '"P26"', X, Begin2, End2) &
+		~strCMP(Y, Z) & ~disjoint(Begin1, End1, Begin2, End2) & checkInterval(Begin1, End1, Begin2, End2) ) >> conflict(X, "oneSpouseWoman", Z), weight : 400.0
+	// #16. A person must be born before getting married.
+	m.add rule :  ( tf(X, '"P569"', Y, Begin1, End1)  &  tf(X, '"P26"', Z, Begin2, End2)  &
+		~before(Begin1, End1, Begin2, End2) & checkInterval(Begin1, End1, Begin2, End2) ) >> conflict(X, "spouseBeforeBorn", Z), weight : 400.0
+	// #17. A person must be alive to be married.
+	m.add rule :  ( tf(X, '"P570"', Y, Begin1, End1)  &  tf(X, '"P26"', Z, Begin2, End2)  &
+		~before(Begin2, End2, Begin1, End1) & checkInterval(Begin1, End1, Begin2, End2) ) >> conflict(X, "spouseAfterDeath", Z), weight : 400.0
+	// #18. A person cannot be both a player and a coach at the same time.   [SOFT CONSTRAINT]
+	m.add rule : ( tf(X, '"P54"', Y, Begin1, End1)  &  tf(X, '"P286"', Z, Begin2, End2) &
+		~strCMP(Y, Z) & ~disjoint(Begin1, End1, Begin2, End2) ) >> conflict(X, "playerAndCoach", Z), weight : 4.0
+	// #19. A person cannot work for two companies at the same time.     [SOFT]
+	m.add rule : ( tf(X,  '"P108"', Y, Begin1, End1)  &  tf(X,  '"P108"', Z, Begin2, End2) &
+		~strCMP(Y, Z) & ~disjoint(Begin1, End1, Begin2, End2) & checkInterval(Begin1, End1, Begin2, End2) ) >> conflict(X, "multiWorker", Z), weight : 4.0

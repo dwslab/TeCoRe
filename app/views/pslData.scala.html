@@ -1,0 +1,27 @@
+@index("PSL Input Data") {
+    <div class="container pull-left" style="width: 500px">
+        <form class="form" id="pslDataForm" action="/resolution/psl/editor" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon">Input Data</span>
+                    <input type="file" class="form-control" name="data" id="data" placeholder="Input Data">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon">Constraints</span>
+                    <input type="file" class="form-control" name="constraints" id="constraints" placeholder="Constraints">
+                </div>
+            </div>
+<!--            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon">Threshold</span>
+                    <input type="text" class="form-control" name="threshold" id="threshold" placeholder="Threshold">
+                </div>
+            </div> -->
+            <div class="form-group">
+                <input type="submit" value="Upload" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+}

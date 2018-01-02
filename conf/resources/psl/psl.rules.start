@@ -1,0 +1,271 @@
+/*
+ * This file is part of the PSL software.
+ * Copyright 2011-2013 University of Maryland
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.linqs.example;
+
+import java.text.DecimalFormat;
+
+import org.linqs.psl.application.inference.*;
+import org.linqs.psl.config.*;
+import org.linqs.psl.database.*;
+import org.linqs.psl.database.loading.*;
+import org.linqs.psl.database.rdbms.driver.*;
+import org.linqs.psl.database.rdbms.driver.H2DatabaseDriver.Type;
+import org.linqs.psl.database.rdbms.*;
+import org.linqs.psl.groovy.*;
+import org.linqs.psl.model.atom.*;
+import org.linqs.psl.model.predicate.*;
+import org.linqs.psl.model.term.*;
+import org.linqs.psl.utils.dataloading.InserterUtils;
+import org.linqs.psl.model.function.*;
+
+import org.linqs.psl.application.learning.weight.maxlikelihood.MaxLikelihoodMPE;
+
+import org.linqs.psl.database.Queries;
+
+def static cons(long start_1, long end_1, long start_2, long end_2) {
+    return start_1 <= end_1 && start_2 <= end_2;
+}
+
+abstract class AllenFunction implements ExternalFunction {
+
+    abstract def rel(long start_1, long end_1, long start_2, long end_2)
+
+    def int getArity() {
+        return 4;
+    }
+
+    def ConstantType[] getArgumentTypes() {
+        ConstantType[] foo = new ConstantType[4];
+        foo[0] = ConstantType.Long;
+        foo[1] = ConstantType.Long;
+        foo[2] = ConstantType.Long;
+        foo[3] = ConstantType.Long;
+        return foo;
+    }
+
+    def double getValue(ReadOnlyDatabase db, Constant... args) {
+        long start_1 = Long.parseLong(args[0].toString().replaceAll("'", ""));
+        long end_1   = Long.parseLong(args[1].toString().replaceAll("'", ""));
+        long start_2 = Long.parseLong(args[2].toString().replaceAll("'", ""));
+        long end_2   = Long.parseLong(args[3].toString().replaceAll("'", ""));
+
+        return (cons(start_1, end_1, start_2, end_2) && rel(start_1, end_1, start_2, end_2)) ? 1.0 : 0.0;
+    }
+
+}
+
+class AllenBefore extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return end_1 < start_2;
+    }
+}
+
+class AllenMeets extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return end_1 == start_2;
+    }
+}
+
+class AllenOverlaps extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return start_1 < start_2 && start_2 < end_1 && end_1 < end_2;
+    }
+}
+
+class AllenStarts extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return start_1 == start_2 && end_1 < end_2;
+    }
+}
+
+class AllenDuring extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return start_1 > start_2 && end_1 < end_2;
+    }
+}
+
+class AllenFinishes extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return start_1 < start_2 && end_1 == end_2;
+    }
+}
+
+class AllenEqual extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return start_1 == start_2 && end_1 == end_2;
+    }
+}
+
+class AllenDisjoint extends AllenFunction {
+    def rel(long start_1, long end_1, long start_2, long end_2) {
+        return end_1 < start_2 || end_2 < start_1
+    }
+}
+
+class LessThan implements ExternalFunction {
+    def int getArity() {
+        return 2;
+    }
+
+    def ConstantType[] getArgumentTypes() {
+        ConstantType[] foo = new ConstantType[2];
+        foo[0] = ConstantType.Long;
+        foo[1] = ConstantType.Long;
+        return foo;
+    }
+
+    def double getValue(ReadOnlyDatabase db, Constant... args) {
+        long ddate = Long.parseLong(args[0].toString().replaceAll("'", ""));
+        long bdate = Long.parseLong(args[1].toString().replaceAll("'", ""));
+        return (ddate < bdate ? 1.0 : 0.0);
+    }
+}
+
+class CheckInterval implements ExternalFunction {
+    def int getArity() {
+        return 4;
+    }
+
+    def ConstantType[] getArgumentTypes() {
+        ConstantType[] foo = new ConstantType[4];
+        foo[0] = ConstantType.Long;
+        foo[1] = ConstantType.Long;
+        foo[2] = ConstantType.Long;
+        foo[3] = ConstantType.Long;
+        return foo;
+    }
+
+    def double getValue(ReadOnlyDatabase db, Constant... args) {
+        long begin1 = Long.parseLong(args[0].toString().replaceAll("'", ""));
+        long end1 = Long.parseLong(args[1].toString().replaceAll("'", ""));
+        long begin2 = Long.parseLong(args[2].toString().replaceAll("'", ""));
+        long end2 = Long.parseLong(args[3].toString().replaceAll("'", ""));
+        boolean temp = ((end1 <= begin2) || (end2 <= begin1));
+        if ((end1 < begin1) && (end2 <= begin2)) {
+            return 0.0;
+        } else {
+            return 1.0;
+        }
+    }
+}
+
+class Check implements ExternalFunction {
+    def int getArity() {
+        return 2;
+    }
+
+    def ConstantType[] getArgumentTypes() {
+        ConstantType[] foo = new ConstantType[4];
+        foo[0] = ConstantType.Long;
+        foo[1] = ConstantType.Long;
+        return foo;
+    }
+
+    def double getValue(ReadOnlyDatabase db, Constant... args) {
+        long begin1 = Long.parseLong(args[0].toString().replaceAll("'", ""));
+        long end1 = Long.parseLong(args[1].toString().replaceAll("'", ""));
+        if (end1 < begin1) {
+            return 0.0;
+        } else {
+            return 1.0;
+        }
+    }
+}
+
+class CMPStringSimilarity implements ExternalFunction {
+    def int getArity() {
+        return 2;
+    }
+
+    def ConstantType[] getArgumentTypes() {
+        ConstantType[] foo = new ConstantType[2];
+        foo[0] = ConstantType.String;
+        foo[1] = ConstantType.String;
+        return foo;
+    }
+
+    def double getValue(ReadOnlyDatabase db, Constant... args) {
+        return args[0].toString().equals(args[1].toString()) ? 1.0 : 0.0;
+    }
+}
+
+
+
+
+
+
+/*
+ * The first thing we need to do is initialize a ConfigBundle and a DataStore
+ */
+
+/*
+ * A ConfigBundle is a set of key-value pairs containing configuration options.
+ * One place these can be defined is in psl-example/src/main/resources/psl.properties
+ */
+ConfigManager cm = ConfigManager.getManager()
+ConfigBundle config = cm.getBundle("basic-example")
+
+/* Uses H2 as a DataStore and stores it in a temp. directory by default */
+def defaultPath = System.getProperty("java.io.tmpdir")
+String dbpath = config.getString("dbpath", defaultPath + File.separator + "basic-example")
+DataStore data = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, dbpath, true), config)
+
+
+def withoutErrorTag = {
+
+	PSLModel m = new PSLModel(this, data)
+
+	m.add predicate: "triple",       types: [ConstantType.String, ConstantType.String, ConstantType.String]
+
+	m.add predicate: "conflict",       types: [ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long, ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long]
+
+	m.add predicate: "wrongInterval",       types: [ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long]
+	m.add predicate: "conflictExtended",       types: [ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long, ConstantType.String, ConstantType.Long, ConstantType.Long]
+	m.add predicate: "conflictEvtn",       types: [ConstantType.Long, ConstantType.Long]
+	m.add predicate: "tf",       types: [ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long]
+	m.add predicate: "person",  types:  [ConstantType.String]
+
+	m.add predicate: "valid",       types: [ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long]
+	m.add predicate: "invalid",
+	    types: [ConstantType.String,
+	        ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long,
+	        ConstantType.String, ConstantType.String, ConstantType.String, ConstantType.Long, ConstantType.Long ]
+
+//	m.add function: "bnFiftteenNineteen" , implementation: new BNFiftteenNineteenW()  //
+//	m.add function: "belowTwentyOne" , implementation: new BelowTwentyOneW()  //
+//	m.add function: "belowFifty" , implementation: new BelowFiftyW()  //
+//	m.add function: "aboveFifty" , implementation: new AboveFiftyW()  //
+//	m.add function: "aboveSixteen" , implementation: new AboveSixteenOrEqual()  //
+//	m.add function: "superiorThan40" , implementation: new InequalityGreaterThanW()  // comparisons of the form X > 20
+//	m.add function: "validLifeSpan" , implementation: new ValidLifeSpanW()    //comparisons of the form X - Y  < 150
+//	m.add function: "notEqual" , implementation: new NotEqual()    //comparisons of the form X != Y
+//	m.add function: "strCMP", implementation: new CMPStringSimilarity()  // compare strings "aaa" = "bb"
+//	m.add function: "greaterThan", implementation: new GreaterThan()  // compare X > Y
+//	m.add function: "lessThan", implementation: new LessThan()  // compare X < Y
+
+//	m.add function: "before", implementation: new AllenBefore()  // Allen's overlap inverse
+//	m.add function: "meets", implementation: new AllenMeets()
+//	m.add function: "overlaps", implementation: new AllenOverlaps()  // Allen's overlap
+//    m.add function: "starts", implementation: new AllenStarts()
+//    m.add function: "during", implementation: new AllenDuring()
+//    m.add function: "finishes", implementation: new AllenFinishes()
+//    m.add function: "equal", implementation: new AllenEqual()
+//	m.add function: "disjoint" , implementation: new AllenDisjoint()  //
+
+//	m.add function: "checkInterval", implementation: new CheckInterval() // check interval
+
+m.add rule :  ( tf(X, Z, Y, Begin1, End1) & lessThan(End1, Begin1) ) >> wrongInterval(X, Z, Y, Begin1, End1), weight : 400.0

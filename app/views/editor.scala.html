@@ -1,0 +1,76 @@
+@(reasoner: Reasoner)
+
+@index("Constraints Editor") {
+    <script src="@routes.Assets.versioned("javascripts/bootstrap3-typeahead.min.js")"></script>
+
+    <div class="container pull-left" style="width: 750px">
+        <form class="form-horizontal" id="constraintsAddForm" action="javascript:;" onsubmit="addConstraint();">
+            <div class="form-group">
+                <div class="col-sm-4">
+                    <input class="form-control typeahead" name="predicate1" id="predicate1" placeholder="First Predicate" data-provide="typeahead" autocomplete="off">
+                </div>
+                <div class="col-sm-2">
+                    <select type="select" class="form-control" name="relation" id="relation" placeholder="Please choose one...">
+                        <option value="before">before</option>
+                        <option value="meets">meets</option>
+                        <option value="overlaps">overlaps</option>
+                        <option value="starts">starts</option>
+                        <option value="during">during</option>
+                        <option value="finishes">finishes</option>
+                        <option value="equal">is equal to</option>
+                        <option value="disjoint">disjoint</option>
+                    </select>
+                </div>
+                <div class="col-sm-4">
+                    <input class="form-control typeahead" name="predicate2" id="predicate2" placeholder="Second Predicate" data-provide="typeahead" autocomplete="off">
+                </div>
+                <div class="col-sm-2">
+                    <input type="submit" value="Add" class="btn btn-primary" style="width: 100%;"/>
+                </div>
+            </div>
+        </form>
+        <form class="form-horizontal" id="constraintsShowForm" action="@reasoner.getRoute" method="POST">
+            <div class="form-group">
+                <div class="col-sm-12">
+                    <textarea type="text" rows="3" class="form-control" name="uploadedConstraints" id="constraintsArea" readonly></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-12">
+                    <input type="submit" value="Submit" class="btn btn-primary" />
+                </div>
+            </div>
+        </form>
+    </div>
+    <script>
+            var $input = $(".typeahead");
+            $.get("@routes.EditorController.getPredicates", function (data) {
+                $input.typeahead({source: data});
+            }, 'json');
+            $input.change(function () {
+                var current = $input.typeahead("getActive");
+                if (current) {
+                    // Some item from your model is active!
+                    if (current.name == $input.val().toLowerCase()) {
+                        // This means the exact match is found. Use toLowerCase() if you want case insensitive match.
+                    } else {
+                        // This means it is only a partial match, you can either add a new item
+                        // or take the active if you don't want new items
+                    }
+                } else {
+                    // Nothing is active so it is a new value (or maybe empty value)
+                }
+            });
+
+            function addConstraint() {
+                if ($('#predicate1').val() != "" && $('#predicate2').val() != "") {
+                    $('#constraintsArea').val(
+                            $('#predicate1').val()
+                            + '\t<' + $('#relation').val() + '>\t'
+                            + $('#predicate2').val()
+                            + '\n'
+                            + $('#constraintsArea').val())
+                }
+            }
+    </script>
+}

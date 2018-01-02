@@ -1,0 +1,131 @@
+@(consistent: Int, conflicting: Int, duration: Long)
+
+@index("Result") {
+    <div class="container pull-left" style="width: 80%">
+        <table class="table table-bordered" style="width: 450px">
+            <tr class="warning">
+                <td class="col-sm-3">Overall triples</td>
+                <td class="col-sm-3">@{
+                    consistent + conflicting
+                }</td>
+            </tr>
+            <tr class="success">
+                <td>Consistent triples</td>
+                <td>@consistent</td>
+            </tr>
+            <tr class="danger">
+                <td>Removed/Conflicted triples</td>
+                <td>@conflicting</td>
+            </tr>
+            <tr>
+                <td>Runtime</td>
+                <td>@{
+                    duration / 1000d
+                } sec</td>
+            </tr>
+        </table>
+
+        <div>
+            <a class="btn btn-primary" href="@routes.MlnController.getDataFile()">Download Data</a>
+            <a class="btn btn-primary" href="@routes.MlnController.getRulesFile()">Download Rules</a>
+            <a class="btn btn-primary" href="@routes.MlnController.getConstraintsFile()">Download Constraints</a>
+        </div>
+
+        <a name="consistent" class="results"></a>
+        <h2>Consistent Triples</h2>
+        <div>
+            <table id="table_consistent" class="table table-bordered">
+                <thead>
+                    <th>Subject</th>
+                    <th>Predicate</th>
+                    <th>Object</th>
+                    <th>From</th>
+                    <th>To</th>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+
+        <a name="conflicting" class="results"></a>
+        <h2>Conflicting Triples</h2>
+        <div>
+            <table id="table_conflicting" class="table table-bordered">
+                <thead>
+                    <th>Subject</th>
+                    <th>Predicate</th>
+                    <th>Object</th>
+                    <th>From</th>
+                    <th>To</th>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+            $(document).ready(function () {
+                $('#table_consistent').DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            title: 'consistent'
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            title: 'consistent'
+
+                        }
+                    ],
+                    pageLength: 15,
+                    serverSide: true,
+                    ajax: {
+                        url: '/resolution/mln/result/consistent',
+                        type: 'POST'
+                    },
+                    columns: [
+                        { data: "subject" },
+                        { data: "predicate" },
+                        { data: "obj" },
+                        { data: "from" },
+                        { data: "to" }
+                    ]
+                });
+            });
+            $(document).ready(function () {
+                $('#table_conflicting').DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            title: 'conflicting'
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            title: 'conflicting'
+
+                        }
+                    ],
+                    pageLength: 15,
+                    serverSide: true,
+                    ajax: {
+                        url: '/resolution/mln/result/conflicting',
+                        type: 'POST'
+                    },
+                    columns: [
+                        { data: "subject" },
+                        { data: "predicate" },
+                        { data: "obj" },
+                        { data: "from" },
+                        { data: "to" }
+                    ]
+                });
+            });
+    </script>
+
+}

@@ -1,0 +1,27 @@
+@index("MLN Input Data") {
+    <div class="container pull-left" style="width: 500px">
+        <form class="form" id="mlnDataForm" action="/resolution/mln/editor" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon">Input Data</span>
+                    <input type="file" class="form-control" name="data" id="data" placeholder="Input Data">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon">Rules</span>
+                    <input type="file" class="form-control" name="rules" id="rules" placeholder="Rules">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon">Constraints</span>
+                    <input type="file" class="form-control" name="constraints" id="constraints" placeholder="Constraints">
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Upload" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+}
